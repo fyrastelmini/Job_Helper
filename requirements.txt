@@ -1,3 +1,7 @@
 pytest
 pylint
 black
+beautifulSoup4
+pandas
+flask
+requests
