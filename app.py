@@ -1,10 +1,8 @@
-from flask import Flask, render_template, request, redirect, url_for
 import os
 import pandas as pd
 from bs4 import BeautifulSoup
 import requests
-
-app = Flask(__name__)
+import azure.functions as func
 
 
 def extract_div_content_linkedin(url, div_class):
@@ -46,21 +44,15 @@ def extract_div_content_linkedin(url, div_class):
         print(f"Failed to retrieve the page. Status code: {response.status_code}")
 
 
-@app.route("/")
-def index():
-    return render_template("index.html")
-
-
-@app.route("/update_data", methods=["POST"])
-def update_data():
-    url = request.form["url"]
+def main(req: func.HttpRequest) -> func.HttpResponse:
+    req_body = req.get_json()
+    url = req_body.get("url")
 
     # Extract information from the URL
     div_class = (
         "top-card-layout__entity-info-container flex flex-wrap papabear:flex-nowrap"
     )
     text = extract_div_content_linkedin(url, div_class)
-    # text['URL'] = url
 
     # Load existing DataFrame or create a new one
     if os.path.exists("data.csv"):
@@ -74,8 +66,4 @@ def update_data():
     # Save the DataFrame to "data.csv"
     df.to_csv("data.csv", index=False)
 
-    return redirect(url_for("index"))
-
-
-if __name__ == "__main__":
-    app.run(debug=True)
+    return func.HttpResponse("Data updated successfully", status_code=200)
